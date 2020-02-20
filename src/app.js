@@ -16,10 +16,41 @@ app.use(morgan(morganOption));
 app.use(helmet());
 app.use(cors());
 
-const addressBook = [];
+app.post('*', function validateBearerToken(req, res, next) {
+  const apiToken = process.env.API_TOKEN
+  const authToken = req.get('Authorization')
+  console.log(apiToken);
+  console.log('validate bearer token middleware')
+  if(!authToken || authToken.split(' ')[1] !== apiToken) {
+    return res.status(401).json({error: 'Unauthorized request'})
+  }
+  next()
+})
+
+app.delete('*', function validateBearerToken(req, res, next) {
+  const apiToken = process.env.API_TOKEN
+  const authToken = req.get('Authorization')
+  console.log('validate bearer token middleware')
+  if(!authToken || authToken.split(' ')[1] !== apiToken) {
+      return res.status(401).json({error: 'Unauthorized request'})
+  }
+    next()
+})
+
+const addressBook = [
+  {
+    id: '5454',
+    firstName: 'Jim',
+    lastName: 'Smith',
+    address1: 'asdfas',
+    city: 'asdf',
+    state: 'ny',
+    zip: 65454
+  }
+];
 
 app.post('/address', (req, res) => {
-  const {firstName, lastName, address1, city, state, zip} = req.query;
+  const {firstName, lastName, address1, address2, city, state, zip = false} = req.query;
   if(!firstName) {
     return res
       .status(400)
@@ -63,7 +94,7 @@ app.post('/address', (req, res) => {
   else {
     const id = uuid();
     const newAddress = {
-      id:  id,
+      id,
       firstName,
       lastName,
       address1,
@@ -76,11 +107,12 @@ app.post('/address', (req, res) => {
     res.send("All validation passed");
   }
 });
-
 app.delete("/address/:id", (req, res) => {
-  const { addressId } = req.params;
-  const index = addressBook.findIndex(address => address.id === addressId)
-  
+  const addressId  = req.params.id;
+  console.log(addressBook);
+  const index = addressBook.findIndex(address => address.id === addressId);
+  console.log(index);
+  console.log(addressId);
   if(index === -1) {
     return res
       .status(404)
